@@ -1,6 +1,6 @@
-int red =255;
+int red = 255;
 int green = 0;
-int blue = 0;
+int blue = 255;
 
 void ps4() {
   // Below has all accessible outputs from the controller
@@ -32,35 +32,44 @@ void ps4() {
     if (PS4.Touchpad()) Serial.println("Touch Pad Button");
 
     if (PS4.L2()) {
-      //Serial.printf("L2 button at %d\n", PS4.L2Value());
-     botspeed = PS4.L2Value();
-      
+      Serial.println("L2 Button");
+      Serial.printf("L2 button at %d\n", PS4.L2Value());
+
     }
     if (PS4.R2()) {
-    //  Serial.printf("R2 button at %d\n", PS4.R2Value());
-       botspeed = -PS4.R2Value();
+      Serial.println("R2 Button");
+      Serial.printf("R2 button at %d\n", PS4.R2Value());
+
     }
 
     if (PS4.LStickX()) {
-    //  Serial.printf("Left Stick x at %d\n", PS4.LStickX());
+      //  Serial.printf("Left Stick x at %d\n", PS4.LStickX());
+
     }
     if (PS4.LStickY()) {
-    //  Serial.printf("Left Stick y at %d\n", PS4.LStickY());
+      //  Serial.printf("Left Stick y at %d\n", PS4.LStickY());
+      botspeed = PS4.LStickY();
     }
     if (PS4.RStickX()) {
-     // Serial.printf("Right Stick x at %d\n", PS4.RStickX());
+      // Serial.printf("Right Stick x at %d\n", PS4.RStickX());
+      bot_turn_speed = PS4.RStickX();
     }
     if (PS4.RStickY()) {
-     // Serial.printf("Right Stick y at %d\n", PS4.RStickY());
+      // Serial.printf("Right Stick y at %d\n", PS4.RStickY());
     }
 
     //if (PS4.Charging()) Serial.println("The controller is charging");
     //if (PS4.Audio()) Serial.println("The controller has headphones attached");
     //if (PS4.Mic()) Serial.println("The controller has a mic attached");
-    PS4.setLed(255, 0, 0);
-   // Serial.printf("Battery Level : %d\n", PS4.Battery());
-     PS4.setRumble(PS4.L2Value(), PS4.R2Value());
-
+    PS4.setLed(255, 0, 255);
+    // Serial.printf("Battery Level : %d\n", PS4.Battery());
+    if (abs(PS4.LStickY()) > 20 || abs(PS4.RStickX()) > 20)
+    {
+      PS4.setRumble(abs(PS4.LStickY()), abs(PS4.RStickX()));
+    }
+    else {
+      PS4.setRumble(0, 0);
+    }
     // Sends data set in the above three instructions to the controller
     PS4.sendToController();
     Serial.println();
