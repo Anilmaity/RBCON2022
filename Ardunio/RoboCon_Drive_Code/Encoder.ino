@@ -72,7 +72,7 @@ void PinA1()
     Step_diff_time[1] = millis() - Step_starttime[1];
     Step_starttime[1] = millis();
     Steps[1] -= 1;
-  }
+ 
   pos[1] -= 1;
   if (abs(pos[1]) >= StepSize)
   {
@@ -80,7 +80,7 @@ void PinA1()
     pos_time[1] = millis();
 
   }
-
+ }
 }
 
 void PinB2()
@@ -113,13 +113,13 @@ void PinA2()
     Step_diff_time[2] = millis() - Step_starttime[2];
     Step_starttime[2] = millis();
     Steps[2] += 1;
-  }
   pos[2] += 1;
   if (abs(pos[2]) >= StepSize)
   {
     pos[2] = 0;
     pos_time[2] = millis();
 
+  }
   }
 
 }

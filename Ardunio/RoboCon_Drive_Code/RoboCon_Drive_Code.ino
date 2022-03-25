@@ -55,6 +55,10 @@ void Task(void * parameter)
 
   for (;;)
   {
+//     ps4();
+//  getlidardata();
+//  getlidardata2();
+  //motion_sense();
 
     delay(10);
   }
@@ -65,7 +69,13 @@ void Task(void * parameter)
 void setup() {
   //Serial.begin (250000); // UART0 TX GPIO1 RX GPIO3
   Serial.begin(115200); // UART2 TX GPIO17 RX GPIO16
+  Serial.println("PS4 Setup");
   PS4.begin();
+    Serial.println("lidar Setup");
+  Lidarsetup();
+  //mpu_setup();
+  
+  Serial.println("Encoder Setup");
 
 
   for (int i = 0 ; i <= 3; i++) {
@@ -105,12 +115,23 @@ void setup() {
 int inputtemp = 70;
 
 void loop() {
+   
+  ps4();
+  getlidardata();
+  getlidardata2();
+  //motion_sense();
+  calculate_error();
+  run_motor();
+    Serial.println(4 * botspeed);
 
 
+  //just here to slow down the output, and show it will workeven during a delay
+}
 
+void calculate_error(){
 
   for (int i = 0; i <= 3; i++) {
-    rpm[i] = 0.5 * (142 * abs(pos[i]) / ((millis() + 1) - pos_time[i])) + 0.5 * rpm[i];
+    rpm[i] = 0.5 * (142 * pos[i] / ((millis() + 1) - pos_time[i])) + 0.5 * rpm[i];
     error[i] = -(rpm[i] - 4 * botspeed);
     //Serial.print(abs(inputtemp)+error[i]);
     //Serial.print("  ");
@@ -123,15 +144,13 @@ void loop() {
     //Serial.print(abs(inputtemp));
     //Serial.print("  ");
   }
-  //
-  Serial.println(4 * botspeed);
-  run_motor();
-
-  ps4();
-  //just here to slow down the output, and show it will workeven during a delay
+  
 }
-
 void run_motor() {
+
+   
+  //
+  
 
   motor_speed[0] = 4 * botspeed - 2 * bot_turn_speed;
   motor_speed[1] = 4 * botspeed + 2 * bot_turn_speed;
