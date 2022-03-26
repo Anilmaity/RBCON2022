@@ -44,6 +44,7 @@ void ps4() {
 
     if (PS4.LStickX()) {
       //  Serial.printf("Left Stick x at %d\n", PS4.LStickX());
+      sideways = PS4.LStickX();
 
     }
     if (PS4.LStickY()) {

@@ -1,4 +1,5 @@
 // esp32 mac ac:67:b2:36:24:de
+//a) Moving straight ahead, b) Moving sideways, c) Moving diagonally, d) Moving around a bend, e) Rotation, f) Rotation around the central point of one axle
 
 int encoderAPin[4] = {14, 12, 32, 27}; // ISSUE WITH 34 35 PIN EXT PULLUP
 int encoderBPin[4] = {25, 13, 33, 26}; // ISSE 12 PIN BOOT FAIL USE 27 OR MAY TRY 14
@@ -9,9 +10,12 @@ int Step_diff_time[4] = {0, 0, 0, 0};
 volatile int SigA[4] = {0, 0, 0, 0};
 volatile int SigB[4] = {0, 0, 0, 0};
 volatile int botspeed = 0;
+volatile int sideways = 0;
+
 volatile int bot_turn_speed = 0;
 
 int motor_speed[4] = {0, 0, 0, 0};
+int previous_motor_speed[4] = {0, 0, 0, 0};
 
 int Steps[4] = {0, 0, 0, 0};
 int rev[4] = {0, 0, 0, 0};
@@ -55,10 +59,10 @@ void Task(void * parameter)
 
   for (;;)
   {
-//     ps4();
-//  getlidardata();
-//  getlidardata2();
-  //motion_sense();
+    //     ps4();
+    //  getlidardata();
+    //  getlidardata2();
+    //motion_sense();
 
     delay(10);
   }
@@ -71,10 +75,10 @@ void setup() {
   Serial.begin(115200); // UART2 TX GPIO17 RX GPIO16
   Serial.println("PS4 Setup");
   PS4.begin();
-    Serial.println("lidar Setup");
+  Serial.println("lidar Setup");
   Lidarsetup();
   //mpu_setup();
-  
+
   Serial.println("Encoder Setup");
 
 
@@ -115,60 +119,89 @@ void setup() {
 int inputtemp = 70;
 
 void loop() {
-   
+
   ps4();
   getlidardata();
   getlidardata2();
   //motion_sense();
-  calculate_error();
   run_motor();
-    Serial.println(4 * botspeed);
+  Serial.println(4 * botspeed);
 
 
   //just here to slow down the output, and show it will workeven during a delay
 }
 
-void calculate_error(){
+void calculate_error() {
 
   for (int i = 0; i <= 3; i++) {
     rpm[i] = 0.5 * (142 * pos[i] / ((millis() + 1) - pos_time[i])) + 0.5 * rpm[i];
-    error[i] = -(rpm[i] - 4 * botspeed);
+
+    int speed_to_rpm = map(previous_motor_speed[i], 0 , 1023, 0, 600);
+    error[i] = -(rpm[i] - 4 * speed_to_rpm );
     //Serial.print(abs(inputtemp)+error[i]);
     //Serial.print("  ");
-    //Serial.print(error[i]);
-    //Serial.print("  ");
 
+    Serial.print(error[i]);
+    Serial.print("  ");
     Serial.print(rpm[i]);
     Serial.print("  ");
     //
     //Serial.print(abs(inputtemp));
     //Serial.print("  ");
   }
-  
+
 }
+
 void run_motor() {
 
-   
-  //
-  
+  calculate_error();
 
-  motor_speed[0] = 4 * botspeed - 2 * bot_turn_speed;
-  motor_speed[1] = 4 * botspeed + 2 * bot_turn_speed;
-  motor_speed[2] = 4 * botspeed - 2 * bot_turn_speed;
-  motor_speed[3] = 4 * botspeed + 2 * bot_turn_speed;
+  motor_speed[0] = 4 * botspeed - 2 * bot_turn_speed + 2 * sideways;
+  motor_speed[1] = 4 * botspeed + 2 * bot_turn_speed - 2 * sideways;
+  motor_speed[2] = 4 * botspeed - 2 * bot_turn_speed + 2 * sideways;
+  motor_speed[3] = 4 * botspeed + 2 * bot_turn_speed - 2 * sideways;
+
+
+
+
 
   for (int i = 0; i <= 3; i++) {
+
     if (motor_speed[i] > 30) {
-      analogWrite(PwmPin[i], abs(motor_speed[i]));
-      digitalWrite(DirPin[i], HIGH);
+
+      if (motor_speed[i] > 1023)
+      {
+        motor_speed[i] = 1023;
+        analogWrite(PwmPin[i], 1023);
+        digitalWrite(DirPin[i], HIGH);
+      }
+      else {
+
+        analogWrite(PwmPin[i], motor_speed[i]);
+        digitalWrite(DirPin[i], HIGH);
+      }
     }
-    else if (motor_speed[i] < -30) {
-      analogWrite(PwmPin[i], abs(motor_speed[i]));
+  
+  else if (motor_speed[i] < -30) {
+    if (abs(motor_speed[i]) > 1023)
+    {
+      motor_speed[i] = -1023;
+      analogWrite(PwmPin[i], 1023);
       digitalWrite(DirPin[i], LOW);
     }
     else {
-      analogWrite(PwmPin[i], 0);
+      analogWrite(PwmPin[i], abs(motor_speed[i]));
       digitalWrite(DirPin[i], LOW);
     }
+
   }
+  else {
+    analogWrite(PwmPin[i], 0);
+    digitalWrite(DirPin[i], LOW);
+  }
+
+  previous_motor_speed[i] = motor_speed[i];
+}
+
+
 }
