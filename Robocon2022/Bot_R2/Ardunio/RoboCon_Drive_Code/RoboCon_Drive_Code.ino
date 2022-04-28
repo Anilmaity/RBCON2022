@@ -6,12 +6,22 @@ int encoderBPin[4] = {25, 13, 33, 26}; // ISSE 12 PIN BOOT FAIL USE 27 OR MAY TR
 int Step_starttime[4] = {0, 0, 0, 0};
 int Step_diff_time[4] = {0, 0, 0, 0};
 
+int db_delay = 1000;
+
+volatile int Grip_V_move = 0;
+volatile int Mode_G = 0;
+volatile int Select_G = 0;
+volatile int O_C_Grip = 0;
+volatile int Grip_speed = 0;
+
+volatile int S_V = 0;
+volatile int S_Grip = 0;
 
 volatile int SigA[4] = {0, 0, 0, 0};
 volatile int SigB[4] = {0, 0, 0, 0};
 volatile int botspeed = 0;
 volatile int sideways = 0;
-
+volatile int bat = 0;
 volatile int bot_turn_speed = 0;
 
 int motor_speed[4] = {0, 0, 0, 0};
@@ -73,10 +83,11 @@ void Task(void * parameter)
 void setup() {
   //Serial.begin (250000); // UART0 TX GPIO1 RX GPIO3
   Serial.begin(115200); // UART2 TX GPIO17 RX GPIO16
+  Serial2.begin(115200);
   Serial.println("PS4 Setup");
   PS4.begin();
   Serial.println("lidar Setup");
-  Lidarsetup();
+  //Lidarsetup();
   //mpu_setup();
 
   Serial.println("Encoder Setup");
@@ -121,12 +132,14 @@ int inputtemp = 70;
 void loop() {
 
   ps4();
-  getlidardata();
-  getlidardata2();
+  //getlidardata();
+  //getlidardata2();
   //motion_sense();
   run_motor();
-  Serial.println(4 * botspeed);
+  
 
+  send_data();
+  // Serial.println(4 * botspeed);
 
   //just here to slow down the output, and show it will workeven during a delay
 }
@@ -141,10 +154,7 @@ void calculate_error() {
     //Serial.print(abs(inputtemp)+error[i]);
     //Serial.print("  ");
 
-    Serial.print(error[i]);
-    Serial.print("  ");
-    Serial.print(rpm[i]);
-    Serial.print("  ");
+
     //
     //Serial.print(abs(inputtemp));
     //Serial.print("  ");
@@ -181,27 +191,37 @@ void run_motor() {
         digitalWrite(DirPin[i], HIGH);
       }
     }
-  
-  else if (motor_speed[i] < -30) {
-    if (abs(motor_speed[i]) > 1023)
-    {
-      motor_speed[i] = -1023;
-      analogWrite(PwmPin[i], 1023);
-      digitalWrite(DirPin[i], LOW);
+
+    else if (motor_speed[i] < -30) {
+      if (abs(motor_speed[i]) > 1023)
+      {
+        motor_speed[i] = -1023;
+        analogWrite(PwmPin[i], 1023);
+        digitalWrite(DirPin[i], LOW);
+      }
+      else {
+        analogWrite(PwmPin[i], abs(motor_speed[i]));
+        digitalWrite(DirPin[i], LOW);
+      }
+
     }
     else {
-      analogWrite(PwmPin[i], abs(motor_speed[i]));
+      analogWrite(PwmPin[i], 0);
       digitalWrite(DirPin[i], LOW);
     }
 
-  }
-  else {
-    analogWrite(PwmPin[i], 0);
-    digitalWrite(DirPin[i], LOW);
+    previous_motor_speed[i] = motor_speed[i];
   }
 
-  previous_motor_speed[i] = motor_speed[i];
+
 }
 
+void send_data() {
 
+  Serial2.println("###" + String(Mode_G) + "@" + String(Select_G) + "@" + String(O_C_Grip) + "@" + String(Grip_speed) + "@" + String(Grip_V_move) + "@" + String(S_V) + "@" + String(S_Grip) + "@::");
+  delay(3);
+  Grip_V_move = 0;
+  S_V = 0;
+  S_Grip = 0;
+  
 }
